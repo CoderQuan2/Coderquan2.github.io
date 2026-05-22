@@ -4,36 +4,1287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VibeSync: Quantum Duel & Co-Op Arena</title>
-    <!-- Tailwind CSS for modern responsive layout -->
+    <title>VibeSync: Quantum Tactical Shield</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
-        
         body {
             font-family: 'Rajdhani', sans-serif;
-            background-color: #060713;
+            background-color: #030309;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
         }
-        .orbitron {
-            font-family: 'Orbitron', sans-serif;
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .cyber-grid {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(16, 20, 53, 0.25) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(16, 20, 53, 0.25) 1px, transparent 1px);
         }
-        /* Neon glow utilities */
-        .glow-cyan {
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
-            text-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+        .glass-panel {
+            background: rgba(4, 5, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
         }
-        .glow-magenta {
-            box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
-            text-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col justify-between min-h-screen relative select-none">
+
+    <!-- Ambient Grid Canvas Background -->
+    <div class="absolute inset-0 cyber-grid pointer-events-none z-0"></div>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="relative z-10 w-full max-w-md mx-auto my-auto p-6 flex flex-col gap-6 glass-panel rounded-3xl shadow-2xl transition-all duration-300">
+        <div class="text-center">
+            <h1 class="orbitron text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-500 animate-pulse">
+                VIBESYNC
+            </h1>
+            <p class="text-[10px] text-purple-400 mt-1 uppercase tracking-widest font-bold">Quantum Tactical Shield Matrix</p>
+        </div>
+
+        <div class="bg-black/50 p-4 rounded-xl border border-slate-800/80 text-sm leading-relaxed text-slate-300">
+            <span class="text-cyan-400 font-bold">Fortified Multi-Device Sync:</span> High-fidelity, mathematically invariant coordinate spaces scaled to eliminate aspect ratio drift between the Z Fold 7 and S25.
+        </div>
+
+        <!-- Connection Status Banner -->
+        <div id="auth-status" class="flex items-center justify-center gap-2 bg-slate-950/80 py-2.5 px-4 rounded-xl border border-slate-800/80">
+            <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span id="auth-indicator-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <span id="auth-status-text" class="text-xs orbitron font-bold text-amber-400 uppercase tracking-widest">CONNECTING TO COHERENCE NODE...</span>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <!-- Tabletop Local Game Option -->
+            <button id="btn-local" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 font-bold orbitron tracking-wide text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
+                <span>⚡ FOLD SHARED-SCREEN (LOCAL)</span>
+            </button>
+
+            <div class="flex items-center text-xs text-slate-600 my-1">
+                <div class="flex-grow border-t border-slate-800/80"></div>
+                <span class="px-3 uppercase font-bold tracking-wider text-[9px] text-slate-400">Quantum Network Handshake</span>
+                <div class="flex-grow border-t border-slate-800/80"></div>
+            </div>
+
+            <!-- Network Modes -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-host" disabled class="opacity-50 cursor-not-allowed py-3.5 rounded-xl bg-slate-900 border border-purple-500/30 font-bold orbitron text-[10px] tracking-wider transition-all hover:bg-slate-800/80">
+                    CREATE ROOM
+                </button>
+                <button id="btn-join" disabled class="opacity-50 cursor-not-allowed py-3.5 rounded-xl bg-slate-900 border border-rose-500/30 font-bold orbitron text-[10px] tracking-wider transition-all hover:bg-slate-800/80">
+                    JOIN ROOM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="lobby-menu" class="hidden relative z-10 w-full max-w-md mx-auto my-auto p-6 flex flex-col gap-6 glass-panel rounded-3xl shadow-2xl">
+        <div class="text-center">
+            <h2 class="orbitron text-2xl font-black text-cyan-400 tracking-wider">ALIGNMENT GATEWAY</h2>
+            <p class="text-xs text-slate-400">Establish paired coordinate channels</p>
+        </div>
+
+        <div class="bg-black/60 p-5 rounded-2xl border border-slate-800 flex flex-col items-center justify-center gap-2">
+            <span class="text-[10px] text-purple-400 tracking-widest uppercase font-bold text-center">Room Gateway Signature</span>
+            <span id="room-code-display" class="orbitron text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-rose-400">----</span>
+            <span id="player-count" class="text-xs text-slate-400 mt-2">Initializing tactical matrices...</span>
+        </div>
+
+        <!-- Connection Handshake UI -->
+        <div id="join-input-container" class="hidden flex flex-col gap-2">
+            <input id="room-code-input" type="text" pattern="[0-9]*" inputmode="numeric" maxlength="4" placeholder="ENTER 4-DIGIT CODE" class="w-full py-3 bg-black/50 border border-slate-700 rounded-xl text-center orbitron text-xl text-cyan-300 font-bold tracking-widest focus:outline-none focus:border-cyan-400">
+            <button id="btn-connect-room" class="w-full py-3 bg-gradient-to-r from-rose-500 to-purple-600 font-bold orbitron text-xs tracking-wider rounded-xl transition-all active:scale-95">
+                ESTABLISH MATRIX INTERFACE
+            </button>
+        </div>
+
+        <div class="flex gap-2">
+            <button id="btn-start-game" class="hidden flex-1 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold orbitron text-xs tracking-widest text-white transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+                INITIATE CORE ENGINE
+            </button>
+            <button id="btn-lobby-back" class="flex-1 py-3 bg-slate-900 text-slate-400 border border-slate-800 rounded-xl font-bold orbitron text-xs">
+                ABORT LINK
+            </button>
+        </div>
+    </div>
+
+    <!-- ARENA & CONTROLLER WRAPPER -->
+    <div id="game-container" class="hidden absolute inset-0 z-20 bg-black flex flex-col">
+        
+        <!-- HUD / Status / HP -->
+        <div class="p-4 flex justify-between items-center bg-slate-950/90 border-b border-slate-900/80 relative z-30">
+            <!-- P1 HUD -->
+            <div class="flex flex-col">
+                <span class="orbitron text-[10px] tracking-wider text-cyan-400">P1 HULL SECURITY</span>
+                <div class="w-24 h-2 bg-slate-900 rounded-full overflow-hidden mt-1 border border-slate-800">
+                    <div id="p1-health-bar" class="w-full h-full bg-cyan-400 transition-all duration-150"></div>
+                </div>
+            </div>
+
+            <!-- VS Core -->
+            <div class="flex flex-col items-center">
+                <span id="game-status-label" class="orbitron text-[10px] font-bold text-purple-400 bg-purple-950/30 border border-purple-500/30 px-3 py-1 rounded-full animate-pulse">
+                    ACTIVE CORRIDOR
+                </span>
+            </div>
+
+            <!-- P2 HUD -->
+            <div class="flex flex-col items-end">
+                <span class="orbitron text-[10px] tracking-wider text-rose-400">P2 HULL SECURITY</span>
+                <div class="w-24 h-2 bg-slate-900 rounded-full overflow-hidden mt-1 border border-slate-800">
+                    <div id="p2-health-bar" class="w-full h-full bg-rose-400 transition-all duration-150"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Render Surface (Canvas) -->
+        <div class="flex-1 relative overflow-hidden bg-slate-950">
+            <canvas id="arena-canvas" class="absolute inset-0 w-full h-full block"></canvas>
+        </div>
+
+        <!-- CONTROLLER PAD (NETWORKED MODE INPUT) -->
+        <div id="control-deck" class="bg-slate-950 border-t border-slate-900/80 p-4 flex flex-col gap-3 relative z-30">
+            
+            <!-- Energy Bar -->
+            <div class="flex items-center justify-between text-xs font-bold orbitron">
+                <span class="text-purple-400">TACTICAL RESERVES:</span>
+                <span id="energy-counter" class="text-emerald-400">0 / 100</span>
+            </div>
+            <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                <div id="energy-bar" class="h-full bg-gradient-to-r from-purple-500 to-emerald-400 transition-all duration-100" style="width: 0%;"></div>
+            </div>
+
+            <!-- Match Cycle System & Spawning Node Matrix -->
+            <div class="grid grid-cols-4 gap-2">
+                <!-- Color Shield Alternator -->
+                <button id="btn-cycle-shield" class="col-span-1 py-4 rounded-xl border border-cyan-400 text-cyan-400 font-bold orbitron text-[10px] flex flex-col items-center justify-center gap-1 bg-cyan-950/20 active:scale-95 transition-all">
+                    <span class="text-[8px] text-slate-400">SHIELD</span>
+                    <span id="active-shield-label" class="tracking-widest">CYAN</span>
+                </button>
+
+                <!-- Projectile Spawners -->
+                <button id="btn-fire-red" class="col-span-1 py-4 rounded-xl bg-rose-950/40 border border-rose-500/40 hover:border-rose-500 font-bold orbitron text-xs flex flex-col items-center justify-center text-rose-400 active:scale-95 transition-all">
+                    <span>BURST</span>
+                    <span class="text-[9px] text-slate-500">20 EN</span>
+                </button>
+                <button id="btn-fire-blue" class="col-span-1 py-4 rounded-xl bg-blue-950/40 border border-blue-500/40 hover:border-blue-500 font-bold orbitron text-xs flex flex-col items-center justify-center text-blue-400 active:scale-95 transition-all">
+                    <span>SLOW</span>
+                    <span class="text-[9px] text-slate-500">40 EN</span>
+                </button>
+                <button id="btn-fire-yellow" class="col-span-1 py-4 rounded-xl bg-amber-950/40 border border-amber-500/40 hover:border-amber-500 font-bold orbitron text-xs flex flex-col items-center justify-center text-amber-400 active:scale-95 transition-all">
+                    <span>GLITCH</span>
+                    <span class="text-[9px] text-slate-500">30 EN</span>
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center mt-1">
+                <button id="btn-quit" class="py-2.5 px-4 bg-slate-900 border border-slate-800 rounded-lg text-xs font-bold text-rose-500 orbitron transition-all active:scale-95">
+                    ABORT CHANNEL
+                </button>
+                <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Tap field to glide shield</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Overlay for Modals -->
+    <div id="toast-modal" class="hidden absolute top-10 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 border border-rose-500 text-rose-200 px-6 py-3 rounded-2xl flex items-center gap-3 text-xs orbitron tracking-widest shadow-2xl transition-all duration-300">
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+        <span id="toast-message">SYNC OVERRIDE ACCESSED</span>
+    </div>
+
+    <!-- Firebase System Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration Context
+        let app, auth, db, appId;
+        let user = null;
+
+        const defaultFirebaseConfig = {
+            apiKey: "",
+            authDomain: "vibesync-fallback.firebaseapp.com",
+            projectId: "vibesync-fallback",
+            storageBucket: "vibesync-fallback.appspot.com",
+            messagingSenderId: "123456",
+            appId: "1:123456:web:abcd"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
+        appId = typeof __app_id !== 'undefined' ? __app_id : 'vibesync-v2';
+
+        // State Engine Architecture
+        let localMode = false; 
+        let hostMode = false; 
+        let activeRoomId = null;
+        let gameActive = false;
+        let localPlayerId = 'p1'; // 'p1' (Bottom) or 'p2' (Top)
+        
+        let p1Health = 100;
+        let p2Health = 100;
+        let tacticalEnergy = 0;
+
+        // Kinematics and Interpolation state buffers
+        let p1ShieldX = 0.5;
+        let p2ShieldX = 0.5;
+        let p1TargetX = 0.5;
+        let p2TargetX = 0.5;
+
+        // Custom quantum shield colors
+        const SHIELD_COLORS = ['CYAN', 'ROSE', 'AMBER'];
+        const SHIELD_RGB = {
+            'CYAN': 'rgb(6, 182, 212)',
+            'ROSE': 'rgb(244, 63, 94)',
+            'AMBER': 'rgb(245, 158, 11)'
+        };
+        let p1ShieldColor = 'CYAN';
+        let p2ShieldColor = 'CYAN';
+
+        // Projectile storage matrix
+        let projectiles = [];
+        let screenShake = 0;
+        let flashAlpha = 0;
+
+        const canvas = document.getElementById('arena-canvas');
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
+        
+        // Logical Coordinate Space Dimensions (Fixed aspect ratio 5:6)
+        const ARENA_W = 1000;
+        const ARENA_H = 1200;
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        // Exponential Backoff Wrapper
+        async function withBackoff(fn, retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    return await fn();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; 
+                }
+            }
         }
-        .glow-purple {
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
-            text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+
+        // Custom Programmatic Synthesizer Engine (Eliminates dynamic asset load pipelines)
+        class QuantumAudio {
+            constructor() { this.audioCtx = null; }
+            init() { 
+                if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+            }
+            playMetallicDeflect() {
+                this.init();
+                const now = this.audioCtx.currentTime;
+                // FM Synthesis
+                const carrier = this.audioCtx.createOscillator();
+                const modulator = this.audioCtx.createOscillator();
+                const modGain = this.audioCtx.createGain();
+                const mainGain = this.audioCtx.createGain();
+
+                carrier.type = 'sine';
+                modulator.type = 'triangle';
+
+                carrier.frequency.setValueAtTime(440, now);
+                carrier.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                
+                modulator.frequency.setValueAtTime(150, now);
+                modulator.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+
+                modGain.gain.setValueAtTime(200, now);
+                modGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+                mainGain.gain.setValueAtTime(0.2, now);
+                mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+                modulator.connect(modGain);
+                modGain.connect(carrier.frequency);
+                carrier.connect(mainGain);
+                mainGain.connect(this.audioCtx.destination);
+
+                carrier.start();
+                modulator.start();
+                carrier.stop(now + 0.2);
+                modulator.stop(now + 0.2);
+            }
+            playWhiteNoiseImpact() {
+                this.init();
+                const now = this.audioCtx.currentTime;
+                const bufferSize = this.audioCtx.sampleRate * 0.4;
+                const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noiseNode = this.audioCtx.createBufferSource();
+                noiseNode.buffer = buffer;
+
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, now);
+                filter.frequency.exponentialRampToValueAtTime(20, now + 0.4);
+
+                const gainNode = this.audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                noiseNode.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioCtx.destination);
+
+                noiseNode.start();
+                noiseNode.stop(now + 0.4);
+            }
+            playSwoopCharge() {
+                this.init();
+                const now = this.audioCtx.currentTime;
+                const osc = this.audioCtx.createOscillator();
+                const filter = this.audioCtx.createBiquadFilter();
+                const gain = this.audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.18);
+
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(200, now);
+                filter.frequency.exponentialRampToValueAtTime(1500, now + 0.18);
+                filter.Q.setValueAtTime(5, now);
+
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.audioCtx.destination);
+
+                osc.start();
+                osc.stop(now + 0.2);
+            }
         }
+        const audio = new QuantumAudio();
+
+        // Safe Firebase Instantiation Sequence
+        const initFirebase = async () => {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                
+                await withBackoff(initAuth);
+
+                onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        user = u;
+                        document.getElementById('auth-status-text').textContent = "QUANTUM NETWORK ONLINE";
+                        document.getElementById('auth-status-text').className = "text-xs orbitron font-bold text-emerald-400 uppercase tracking-widest";
+                        document.getElementById('auth-indicator-dot').className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500";
+                        
+                        document.getElementById('btn-host').disabled = false;
+                        document.getElementById('btn-host').classList.remove('opacity-50', 'cursor-not-allowed');
+                        document.getElementById('btn-join').disabled = false;
+                        document.getElementById('btn-join').classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+            } catch (err) {
+                console.error("Critical Firebase Failure: ", err);
+                document.getElementById('auth-status-text').textContent = "OFFLINE FALLBACK RUNNING";
+                document.getElementById('auth-indicator-dot').className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500";
+            }
+        };
+        
+        // Execute on DOM Ready
+        window.onload = () => {
+            initFirebase();
+        };
+
+        // Notification Engine
+        const showToast = (msg) => {
+            const m = document.getElementById('toast-modal');
+            document.getElementById('toast-message').textContent = msg;
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('hidden'), 2500);
+        };
+
+        // UI Target nodes
+        const menuScreen = document.getElementById('main-menu');
+        const lobbyScreen = document.getElementById('lobby-menu');
+        const gameContainer = document.getElementById('game-container');
+        const roomCodeDisplay = document.getElementById('room-code-display');
+        const playerCount = document.getElementById('player-count');
+        const joinInputContainer = document.getElementById('join-input-container');
+        const roomCodeInput = document.getElementById('room-code-input');
+        const btnStartGame = document.getElementById('btn-start-game');
+
+        const getDocRef = (collName, docId) => {
+            return doc(db, 'artifacts', appId, 'public', 'data', collName, docId);
+        };
+
+        // ----------------- NETWORKING LOCK-STEP HANDSHAKE (RULE 3 SAFE) -----------------
+        let roomSub = null;
+        let p1Sub = null;
+        let p2Sub = null;
+
+        const cleanSubscriptions = () => {
+            if (roomSub) { roomSub(); roomSub = null; }
+            if (p1Sub) { p1Sub(); p1Sub = null; }
+            if (p2Sub) { p2Sub(); p2Sub = null; }
+        };
+
+        const setupRoomListener = (roomId) => {
+            cleanSubscriptions();
+
+            if (!user) return;
+
+            // Main metadata listener
+            roomSub = onSnapshot(getDocRef('rooms', roomId), (snap) => {
+                if (!snap.exists()) return;
+                const d = snap.data();
+
+                if (d.clientId) {
+                    playerCount.textContent = "PAIR LINK ESTABLISHED";
+                    if (hostMode) btnStartGame.classList.remove('hidden');
+                } else {
+                    playerCount.textContent = "SECURE CORRIDOR PENDING...";
+                    btnStartGame.classList.add('hidden');
+                }
+
+                // Global game state routing
+                if (d.state === 'playing' && !gameActive) {
+                    initGame();
+                }
+                if (d.state === 'waiting' && gameActive) {
+                    abortGame(false);
+                }
+            }, (err) => {
+                console.error("Firestore Core Sub Error: ", err);
+                showToast("Gateway connection failed.");
+            });
+
+            // Player 1 state updates (Rule 2 query avoidance)
+            p1Sub = onSnapshot(getDocRef('rooms', roomId + '_p1'), (snap) => {
+                if (!snap.exists() || localPlayerId === 'p1') return;
+                const d = snap.data();
+                p1TargetX = d.targetX;
+                p1ShieldColor = d.shieldColor;
+                if (d.event) processEvent(d.event);
+            }, (err) => console.error(err));
+
+            // Player 2 state updates
+            p2Sub = onSnapshot(getDocRef('rooms', roomId + '_p2'), (snap) => {
+                if (!snap.exists() || localPlayerId === 'p2') return;
+                const d = snap.data();
+                p2TargetX = d.targetX;
+                p2ShieldColor = d.shieldColor;
+                if (d.event) processEvent(d.event);
+            }, (err) => console.error(err));
+        };
+
+        const processEvent = (event) => {
+            if (event.type === 'projectile_spawned') {
+                audio.playSwoopCharge();
+                
+                // Epoch network delay compensation calculations
+                const tSent = event.timestamp;
+                const tNow = Date.now();
+                const deltaT = Math.max(0, (tNow - tSent) / 1000); // relative to seconds
+
+                // Symmetrical inversion of vectors for Player 2's viewport alignment
+                const mappedVY = -event.vy;
+                const mappedVX = -event.vx;
+
+                const startX = 1.0 - event.x;
+                const startY = 1.0 - event.y;
+
+                // Move projectile forward in timeline relative to actual sync delay
+                const correctedX = startX + (mappedVX * deltaT);
+                const correctedY = startY + (mappedVY * deltaT);
+
+                projectiles.push({
+                    id: event.id,
+                    x: correctedX,
+                    y: correctedY,
+                    vx: mappedVX,
+                    vy: mappedVY,
+                    type: event.projType,
+                    color: event.color,
+                    isDeflected: false
+                });
+            } else if (event.type === 'shield_deflected') {
+                audio.playMetallicDeflect();
+                flashAlpha = 0.15;
+            } else if (event.type === 'health_update') {
+                if (localPlayerId === 'p1') {
+                    p2Health = event.health;
+                    updateHealthBar('p2', p2Health);
+                } else {
+                    p1Health = event.health;
+                    updateHealthBar('p1', p1Health);
+                }
+            }
+        };
+
+        document.getElementById('btn-host').addEventListener('click', async () => {
+            audio.init();
+            if (!user) { showToast("AUTHORIZATION DELAY"); return; }
+            
+            hostMode = true;
+            localMode = false;
+            localPlayerId = 'p1';
+            activeRoomId = Math.floor(1000 + Math.random() * 9000).toString();
+
+            menuScreen.classList.add('hidden');
+            lobbyScreen.classList.remove('hidden');
+            roomCodeDisplay.textContent = activeRoomId;
+
+            try {
+                // Initialize clean partitioned database structures
+                await withBackoff(() => setDoc(getDocRef('rooms', activeRoomId), {
+                    id: activeRoomId,
+                    state: 'waiting',
+                    hostId: user.uid,
+                    clientId: '',
+                    timestamp: Date.now()
+                }));
+
+                await withBackoff(() => setDoc(getDocRef('rooms', activeRoomId + '_p1'), {
+                    targetX: 0.5,
+                    shieldColor: 'CYAN',
+                    event: null
+                }));
+
+                await withBackoff(() => setDoc(getDocRef('rooms', activeRoomId + '_p2'), {
+                    targetX: 0.5,
+                    shieldColor: 'CYAN',
+                    event: null
+                }));
+
+                setupRoomListener(activeRoomId);
+            } catch (err) {
+                console.error("Room Initialization failure: ", err);
+                showToast("CHANNEL COLLISION. RETRY.");
+                menuScreen.classList.remove('hidden');
+                lobbyScreen.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('btn-join').addEventListener('click', () => {
+            audio.init();
+            hostMode = false;
+            localMode = false;
+            localPlayerId = 'p2';
+            menuScreen.classList.add('hidden');
+            lobbyScreen.classList.remove('hidden');
+            roomCodeDisplay.textContent = "JOIN";
+            joinInputContainer.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-connect-room').addEventListener('click', async () => {
+            const entered = roomCodeInput.value.trim();
+            if (entered.length !== 4) { showToast("CODE PATTERN FAULT"); return; }
+            activeRoomId = entered;
+
+            try {
+                const roomSnap = await withBackoff(() => getDoc(getDocRef('rooms', activeRoomId)));
+                if (!roomSnap.exists()) { showToast("NO ACTIVE SIGNATURE FOUND"); return; }
+
+                await withBackoff(() => updateDoc(getDocRef('rooms', activeRoomId), {
+                    clientId: user.uid,
+                    state: 'ready'
+                }));
+
+                joinInputContainer.classList.add('hidden');
+                roomCodeDisplay.textContent = activeRoomId;
+                setupRoomListener(activeRoomId);
+            } catch (err) {
+                console.error("Connection Handshake Failed: ", err);
+                showToast("SYNC PIPELINE REFUSED CONNECTION");
+            }
+        });
+
+        btnStartGame.addEventListener('click', async () => {
+            if (!activeRoomId || !user) return;
+            await withBackoff(() => updateDoc(getDocRef('rooms', activeRoomId), { state: 'playing' }));
+        });
+
+        document.getElementById('btn-lobby-back').addEventListener('click', () => {
+            cleanSubscriptions();
+            menuScreen.classList.remove('hidden');
+            lobbyScreen.classList.add('hidden');
+            joinInputContainer.classList.add('hidden');
+        });
+
+        document.getElementById('btn-local').addEventListener('click', () => {
+            audio.init();
+            localMode = true;
+            hostMode = false;
+            localPlayerId = 'p1';
+            menuScreen.classList.add('hidden');
+            initGame();
+        });
+
+
+        // ----------------- TACTICAL ENGINE INPUT CONTROLLERS -----------------
+        const btnCycleShield = document.getElementById('btn-cycle-shield');
+        const activeShieldLabel = document.getElementById('active-shield-label');
+
+        const syncLocalState = async (targetUpdate) => {
+            if (localMode || !activeRoomId || !user) return;
+            const docId = activeRoomId + '_' + localPlayerId;
+            try {
+                await updateDoc(getDocRef('rooms', docId), targetUpdate);
+            } catch (err) {
+                // Throttling safety mechanism triggered internally
+            }
+        };
+
+        const cycleShield = () => {
+            if (localPlayerId === 'p1') {
+                const idx = (SHIELD_COLORS.indexOf(p1ShieldColor) + 1) % SHIELD_COLORS.length;
+                p1ShieldColor = SHIELD_COLORS[idx];
+                activeShieldLabel.textContent = p1ShieldColor;
+                btnCycleShield.style.borderColor = SHIELD_RGB[p1ShieldColor];
+                btnCycleShield.style.color = SHIELD_RGB[p1ShieldColor];
+                syncLocalState({ shieldColor: p1ShieldColor });
+            } else {
+                const idx = (SHIELD_COLORS.indexOf(p2ShieldColor) + 1) % SHIELD_COLORS.length;
+                p2ShieldColor = SHIELD_COLORS[idx];
+                activeShieldLabel.textContent = p2ShieldColor;
+                btnCycleShield.style.borderColor = SHIELD_RGB[p2ShieldColor];
+                btnCycleShield.style.color = SHIELD_RGB[p2ShieldColor];
+                syncLocalState({ shieldColor: p2ShieldColor });
+            }
+            audio.playSwoopCharge();
+        };
+        btnCycleShield.addEventListener('click', cycleShield);
+
+        // Projectile Dispatches
+        const dispatchProjectile = async (type, cost, color, speed) => {
+            if (tacticalEnergy < cost) { showToast("RESERVES DEPLETED"); return; }
+            tacticalEnergy -= cost;
+
+            const projId = crypto.randomUUID();
+            let startY, trajectoryY;
+
+            // Coordinates calculated within local authoritative viewport perspective
+            if (localPlayerId === 'p1') {
+                startY = 0.85; 
+                trajectoryY = -speed; // moving upwards
+            } else {
+                startY = 0.85; 
+                trajectoryY = -speed; // moving relative to flipped coordinate systems
+            }
+
+            const initialX = localPlayerId === 'p1' ? p1ShieldX : p2ShieldX;
+            // Generate parabolic horizontal curve paths based on position offset
+            const trajectoryX = (initialX - 0.5) * 0.35;
+
+            const projectileEvent = {
+                id: projId,
+                type: 'projectile_spawned',
+                x: initialX,
+                y: startY,
+                vx: trajectoryX,
+                vy: trajectoryY,
+                projType: type,
+                color: color,
+                timestamp: Date.now()
+            };
+
+            // Spawn projectile locally instantly
+            projectiles.push({
+                id: projId,
+                x: initialX,
+                y: startY,
+                vx: trajectoryX,
+                vy: trajectoryY,
+                type: type,
+                color: color,
+                isDeflected: false
+            });
+
+            audio.playSwoopCharge();
+
+            // Synchronize with remote data document partition
+            if (!localMode && user) {
+                const docId = activeRoomId + '_' + localPlayerId;
+                await updateDoc(getDocRef('rooms', docId), { event: projectileEvent });
+                
+                // Erase transactional packet index cleanly after 50ms (clears pipe)
+                setTimeout(() => {
+                    if (gameActive) {
+                        updateDoc(getDocRef('rooms', docId), { event: null });
+                    }
+                }, 50);
+            }
+        };
+
+        document.getElementById('btn-fire-red').addEventListener('click', () => dispatchProjectile('BURST', 20, 'ROSE', 0.55));
+        document.getElementById('btn-fire-blue').addEventListener('click', () => dispatchProjectile('SLOW', 40, 'CYAN', 0.28));
+        document.getElementById('btn-fire-yellow').addEventListener('click', () => dispatchProjectile('GLITCH', 30, 'AMBER', 0.42));
+
+
+        // ----------------- MATRIX PHYSIC ENGINE LOOP -----------------
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const wW = container.clientWidth;
+            const wH = container.clientHeight;
+            
+            canvas.width = wW * window.devicePixelRatio;
+            canvas.height = wH * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            // Compute Uniform Aspect Scale Factor to anchor coordinates to a fixed 5:6 Arena (Aspect Ratio Invariance)
+            const arenaRatio = ARENA_W / ARENA_H;
+            const screenRatio = wW / wH;
+            if (screenRatio > arenaRatio) {
+                scale = wH / ARENA_H;
+                offsetX = (wW - ARENA_W * scale) / 2;
+                offsetY = 0;
+            } else {
+                scale = wW / ARENA_W;
+                offsetX = 0;
+                offsetY = (wH - ARENA_H * scale) / 2;
+            }
+        }
+
+        // Coordinate space mapping equations
+        const mapToArenaX = (screenX) => {
+            const rect = canvas.getBoundingClientRect();
+            return (screenX - rect.left - offsetX) / (ARENA_W * scale);
+        };
+        const mapToArenaY = (screenY) => {
+            const rect = canvas.getBoundingClientRect();
+            return (screenY - rect.top - offsetY) / (ARENA_H * scale);
+        };
+
+        const renderX = (arenaX) => offsetX + (arenaX * ARENA_W * scale);
+        const renderY = (arenaY) => offsetY + (arenaY * ARENA_H * scale);
+
+        // Core Local Mode layout elements (Canvas UI buttons for Tabletop Fold usage)
+        const canvasButtonsP1 = {
+            cycle: { x: 30, y: 1050, w: 140, h: 100, label: "SHIELD" },
+            burst: { x: 830, y: 1110, w: 140, h: 60, label: "BURST" },
+            slow: { x: 830, y: 1040, w: 140, h: 60, label: "SLOW" },
+            glitch: { x: 830, y: 970, w: 140, h: 60, label: "GLITCH" }
+        };
+
+        const canvasButtonsP2 = {
+            cycle: { x: 830, y: 50, w: 140, h: 100, label: "SHIELD" },
+            burst: { x: 30, y: 30, w: 140, h: 60, label: "BURST" },
+            slow: { x: 30, y: 100, w: 140, h: 60, label: "SLOW" },
+            glitch: { x: 30, y: 170, w: 140, h: 60, label: "GLITCH" }
+        };
+
+        const initGame = () => {
+            gameActive = true;
+            lobbyScreen.classList.add('hidden');
+            menuScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+
+            p1Health = 100;
+            p2Health = 100;
+            tacticalEnergy = 0;
+
+            p1ShieldX = 0.5;
+            p2ShieldX = 0.5;
+            p1TargetX = 0.5;
+            p2TargetX = 0.5;
+
+            projectiles = [];
+            
+            // Layout Adjustments
+            if (localMode) {
+                document.getElementById('control-deck').classList.add('hidden');
+            } else {
+                document.getElementById('control-deck').classList.remove('hidden');
+            }
+
+            updateHealthBar('p1', p1Health);
+            updateHealthBar('p2', p2Health);
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            lastTickTime = performance.now();
+            animationFrameId = requestAnimationFrame(engineLoop);
+        };
+
+        let lastTickTime = 0;
+        let timeAccumulator = 0;
+
+        const engineLoop = (time) => {
+            if (!gameActive) return;
+            const dt = Math.min((time - lastTickTime) / 1000, 0.1);
+            lastTickTime = time;
+
+            updatePhysics(dt);
+            renderScene();
+
+            animationFrameId = requestAnimationFrame(engineLoop);
+        };
+
+        const updatePhysics = (dt) => {
+            // High-frequency interpolation for target positioning (Stutter-free drift)
+            p1ShieldX += (p1TargetX - p1ShieldX) * 18 * dt;
+            p2ShieldX += (p2TargetX - p2ShieldX) * 18 * dt;
+
+            // Energy accumulator mechanics
+            if (!localMode && tacticalEnergy < 100) {
+                tacticalEnergy = Math.min(100, tacticalEnergy + 15 * dt);
+                document.getElementById('energy-counter').textContent = `${Math.floor(tacticalEnergy)} / 100`;
+                document.getElementById('energy-bar').style.width = `${tacticalEnergy}%`;
+            }
+
+            // Projectile kinematics loop
+            projectiles.forEach((p, idx) => {
+                if (p.type === 'GLITCH') {
+                    // Symmetrical sinewave phase displacement
+                    p.x += Math.sin(timeAccumulator * 15) * 0.18 * dt;
+                }
+
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+
+                // Elastic Wall bounds
+                if (p.x <= 0.03 || p.x >= 0.97) {
+                    p.vx = -p.vx;
+                    p.x = p.x <= 0.03 ? 0.03 : 0.97;
+                    audio.playMetallicDeflect();
+                }
+
+                const shieldWidth = 0.22;
+
+                // Bottom Wall hit-evaluation corridor (P1 Authority Zone)
+                if (p.y >= 0.86 && p.y <= 0.89 && p.vy > 0) {
+                    if (Math.abs(p.x - p1ShieldX) <= (shieldWidth / 2)) {
+                        // Color Sync Validation Check
+                        if (p.color === p1ShieldColor) {
+                            p.vy = -Math.abs(p.vy) * 1.12; // Accelerate on bounce
+                            p.vx += (p.x - p1ShieldX) * 1.8;
+                            p.y = 0.85;
+                            audio.playMetallicDeflect();
+                            flashAlpha = 0.12;
+
+                            if (!localMode) {
+                                syncLocalState({ event: { type: 'shield_deflected' } });
+                                setTimeout(() => {
+                                    if (gameActive) syncLocalState({ event: null });
+                                }, 50);
+                            }
+                        } else {
+                            // Core Impact (Incorrect frequency)
+                            if (localPlayerId === 'p1' || localMode) {
+                                const d = p.type === 'SLOW' ? 40 : p.type === 'GLITCH' ? 30 : 20;
+                                p1Health = Math.max(0, p1Health - d);
+                                updateHealthBar('p1', p1Health);
+                                syncHealthUpdate(p1Health);
+                            }
+                            projectiles.splice(idx, 1);
+                            audio.playWhiteNoiseImpact();
+                            screenShake = 15;
+                        }
+                    }
+                }
+
+                // Top Wall hit-evaluation corridor (P2 Authority Zone)
+                else if (p.y <= 0.14 && p.y >= 0.11 && p.vy < 0) {
+                    if (Math.abs(p.x - p2ShieldX) <= (shieldWidth / 2)) {
+                        if (p.color === p2ShieldColor) {
+                            p.vy = Math.abs(p.vy) * 1.12;
+                            p.vx += (p.x - p2ShieldX) * 1.8;
+                            p.y = 0.15;
+                            audio.playMetallicDeflect();
+                            flashAlpha = 0.12;
+
+                            if (!localMode) {
+                                syncLocalState({ event: { type: 'shield_deflected' } });
+                                setTimeout(() => {
+                                    if (gameActive) syncLocalState({ event: null });
+                                }, 50);
+                            }
+                        } else {
+                            if (localPlayerId === 'p2' || localMode) {
+                                const d = p.type === 'SLOW' ? 40 : p.type === 'GLITCH' ? 30 : 20;
+                                p2Health = Math.max(0, p2Health - d);
+                                updateHealthBar('p2', p2Health);
+                                syncHealthUpdate(p2Health);
+                            }
+                            projectiles.splice(idx, 1);
+                            audio.playWhiteNoiseImpact();
+                            screenShake = 15;
+                        }
+                    }
+                }
+
+                // Complete OOB core penetration checks
+                if (p.y > 0.98) {
+                    if (localPlayerId === 'p1' || localMode) {
+                        p1Health = Math.max(0, p1Health - 25);
+                        updateHealthBar('p1', p1Health);
+                        syncHealthUpdate(p1Health);
+                    }
+                    projectiles.splice(idx, 1);
+                    audio.playWhiteNoiseImpact();
+                    screenShake = 20;
+                } else if (p.y < 0.02) {
+                    if (localPlayerId === 'p2' || localMode) {
+                        p2Health = Math.max(0, p2Health - 25);
+                        updateHealthBar('p2', p2Health);
+                        syncHealthUpdate(p2Health);
+                    }
+                    projectiles.splice(idx, 1);
+                    audio.playWhiteNoiseImpact();
+                    screenShake = 20;
+                }
+            });
+
+            // Decay cosmetic variables
+            if (screenShake > 0.1) screenShake *= 0.88;
+            if (flashAlpha > 0.01) flashAlpha *= 0.82;
+            timeAccumulator += dt;
+        };
+
+        const syncHealthUpdate = async (val) => {
+            if (localMode || !activeRoomId || !user) return;
+            const docId = activeRoomId + '_' + localPlayerId;
+            try {
+                await updateDoc(getDocRef('rooms', docId), { event: { type: 'health_update', health: val } });
+                setTimeout(() => {
+                    if (gameActive) updateDoc(getDocRef('rooms', docId), { event: null });
+                }, 50);
+            } catch (err) {
+                console.warn(err);
+            }
+        };
+
+        const updateHealthBar = (p, val) => {
+            const el = document.getElementById(`${p}-health-bar`);
+            if (el) el.style.width = `${val}%`;
+            if (val <= 0) {
+                gameActive = false;
+                showToast(`${p.toUpperCase()} SYSTEM COLLAPSE. RECONSTRUCTION TERMINATED.`);
+                setTimeout(() => abortGame(true), 3000);
+            }
+        };
+
+        // Render pass utilizing the dynamic matrix scale coordinates
+        const renderScene = () => {
+            ctx.fillStyle = '#030309';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            // Core Shake Transform
+            if (screenShake > 0.1) {
+                const sX = (Math.random() - 0.5) * screenShake;
+                const sY = (Math.random() - 0.5) * screenShake;
+                ctx.translate(sX, sY);
+            }
+
+            // Draw center coordinate separator
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([12, 12]);
+            ctx.beginPath();
+            ctx.moveTo(renderX(0), renderY(0.5));
+            ctx.lineTo(renderX(1), renderY(0.5));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw active boundaries
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(renderX(0), renderY(0), ARENA_W * scale, ARENA_H * scale);
+
+            // Draw kinetic shields
+            const shWidth = 0.22;
+            const shHeight = 16;
+
+            // Draw P1 (Bottom)
+            drawCyberShield(p1ShieldX, 0.88, shWidth, shHeight, SHIELD_RGB[p1ShieldColor]);
+
+            // Draw P2 (Top)
+            drawCyberShield(p2ShieldX, 0.12, shWidth, shHeight, SHIELD_RGB[p2ShieldColor]);
+
+            // Draw projectiles
+            projectiles.forEach((p) => {
+                const radius = p.type === 'SLOW' ? 18 : 10;
+                
+                // Outer plasma aura
+                ctx.beginPath();
+                ctx.arc(renderX(p.x), renderY(p.y), radius * 2.2, 0, Math.PI * 2);
+                ctx.fillStyle = p.color === 'ROSE' ? 'rgba(244, 63, 94, 0.12)' : p.color === 'CYAN' ? 'rgba(6, 182, 212, 0.12)' : 'rgba(245, 158, 11, 0.12)';
+                ctx.fill();
+
+                // Core charge
+                ctx.beginPath();
+                ctx.arc(renderX(p.x), renderY(p.y), radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = p.color === 'ROSE' ? '#f43f5e' : p.color === 'CYAN' ? '#06b6d4' : '#f59e0b';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+
+            // If local mode is active, render the embedded canvas interactive layouts
+            if (localMode) {
+                renderLocalCanvasControls();
+            }
+
+            ctx.restore();
+
+            // Hit Flash Overlay
+            if (flashAlpha > 0.01) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        };
+
+        const drawCyberShield = (arenaX, arenaY, w, h, rgb) => {
+            const rx = renderX(arenaX) - (w * ARENA_W * scale / 2);
+            const ry = renderY(arenaY) - (h / 2);
+            ctx.save();
+            ctx.shadowColor = rgb;
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = rgb;
+            ctx.beginPath();
+            ctx.roundRect(rx, ry, w * ARENA_W * scale, h, 8);
+            ctx.fill();
+            ctx.restore();
+        };
+
+        // Drawing direct wireframe interaction panels for Tabletop Fold Mode (Canvas Native Controls)
+        const renderLocalCanvasControls = () => {
+            // Draw P1 UI buttons
+            drawPanel(canvasButtonsP1.cycle, SHIELD_RGB[p1ShieldColor]);
+            drawPanel(canvasButtonsP1.burst, 'rgb(244, 63, 94)');
+            drawPanel(canvasButtonsP1.slow, 'rgb(6, 182, 212)');
+            drawPanel(canvasButtonsP1.glitch, 'rgb(245, 158, 11)');
+
+            // Draw P2 UI buttons (180-deg rotated visually for opponent seating configuration)
+            ctx.save();
+            // We rotate text and panel styles inside their respective bounding transforms
+            drawPanelRotated(canvasButtonsP2.cycle, SHIELD_RGB[p2ShieldColor]);
+            drawPanelRotated(canvasButtonsP2.burst, 'rgb(244, 63, 94)');
+            drawPanelRotated(canvasButtonsP2.slow, 'rgb(6, 182, 212)');
+            drawPanelRotated(canvasButtonsP2.glitch, 'rgb(245, 158, 11)');
+            ctx.restore();
+        };
+
+        const drawPanel = (btn, color) => {
+            const x = renderX(btn.x / 1000);
+            const y = renderY(btn.y / 1200);
+            const w = btn.w * scale;
+            const h = btn.h * scale;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.fillStyle = 'rgba(4, 5, 15, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.floor(13 * scale)}px Orbitron`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(btn.label, x + (w / 2), y + (h / 2));
+        };
+
+        const drawPanelRotated = (btn, color) => {
+            const x = renderX(btn.x / 1000);
+            const y = renderY(btn.y / 1200);
+            const w = btn.w * scale;
+            const h = btn.h * scale;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.fillStyle = 'rgba(4, 5, 15, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Rotate text 180 degrees
+            ctx.save();
+            ctx.translate(x + (w / 2), y + (h / 2));
+            ctx.rotate(Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.floor(13 * scale)}px Orbitron`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(btn.label, 0, 0);
+            ctx.restore();
+        };
+
+
+        // ----------------- DYNAMIC EVENT INTERCEPTORS -----------------
+        let lastInputSyncTime = 0;
+        const INPUT_THROTTLE_MS = 80;
+
+        const handleInteractiveInput = (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const rawTouches = e.touches || [e];
+
+            for (let i = 0; i < rawTouches.length; i++) {
+                const t = rawTouches[i];
+                const sX = t.clientX;
+                const sY = t.clientY;
+
+                const normX = mapToArenaX(sX);
+                const normY = mapToArenaY(sY);
+
+                if (localMode) {
+                    // Split-screen spatial partitioning (Bottom vs Top)
+                    if (normY > 0.5) {
+                        // Player 1 controls (Bottom)
+                        // Check button coordinate hits
+                        if (checkBtnHit(sX, sY, canvasButtonsP1.cycle)) {
+                            cycleShieldLocal('p1');
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP1.burst)) {
+                            spawnLocalProjectile('p1', 'BURST', 'ROSE', -0.55);
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP1.slow)) {
+                            spawnLocalProjectile('p1', 'SLOW', 'CYAN', -0.28);
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP1.glitch)) {
+                            spawnLocalProjectile('p1', 'GLITCH', 'AMBER', -0.42);
+                        } else {
+                            // Touch positioning glide
+                            p1TargetX = Math.max(0.12, Math.min(0.88, normX));
+                        }
+                    } else {
+                        // Player 2 controls (Top)
+                        if (checkBtnHit(sX, sY, canvasButtonsP2.cycle)) {
+                            cycleShieldLocal('p2');
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP2.burst)) {
+                            spawnLocalProjectile('p2', 'BURST', 'ROSE', 0.55);
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP2.slow)) {
+                            spawnLocalProjectile('p2', 'SLOW', 'CYAN', 0.28);
+                        } else if (checkBtnHit(sX, sY, canvasButtonsP2.glitch)) {
+                            spawnLocalProjectile('p2', 'GLITCH', 'AMBER', 0.42);
+                        } else {
+                            p2TargetX = Math.max(0.12, Math.min(0.88, normX));
+                        }
+                    }
+                } else {
+                    // Cross-Device Network Mode Controls
+                    if (localPlayerId === 'p1') {
+                        // Limit positioning touches strictly inside the upper active canvas areas (not crossing controller deck boundaries)
+                        p1TargetX = Math.max(0.12, Math.min(0.88, normX));
+                        throttledSyncX(p1TargetX);
+                    } else {
+                        // Symmetrical translation adjustment
+                        p2TargetX = Math.max(0.12, Math.min(0.88, 1.0 - normX));
+                        throttledSyncX(p2TargetX);
+                    }
+                }
+            }
+        };
+
+        const checkBtnHit = (sx, sy, btn) => {
+            const bx = renderX(btn.x / 1000);
+            const by = renderY(btn.y / 1200);
+            const bw = btn.w * scale;
+            const bh = btn.h * scale;
+            return (sx >= bx && sx <= bx + bw && sy >= by && sy <= by + bh);
+        };
+
+        const cycleShieldLocal = (player) => {
+            if (player === 'p1') {
+                const idx = (SHIELD_COLORS.indexOf(p1ShieldColor) + 1) % SHIELD_COLORS.length;
+                p1ShieldColor = SHIELD_COLORS[idx];
+            } else {
+                const idx = (SHIELD_COLORS.indexOf(p2ShieldColor) + 1) % SHIELD_COLORS.length;
+                p2ShieldColor = SHIELD_COLORS[idx];
+            }
+            audio.playSwoopCharge();
+        };
+
+        const spawnLocalProjectile = (player, type, color, speed) => {
+            audio.playSwoopCharge();
+            const launchX = player === 'p1' ? p1ShieldX : p2ShieldX;
+            const trajectoryX = (launchX - 0.5) * 0.35;
+            
+            projectiles.push({
+                id: crypto.randomUUID(),
+                x: launchX,
+                y: player === 'p1' ? 0.85 : 0.15,
+                vx: trajectoryX,
+                vy: speed,
+                type: type,
+                color: color,
+                isDeflected: false
+            });
+        };
+
+        const throttledSyncX = (val) => {
+            const now = Date.now();
+            if (now - lastInputSyncTime > INPUT_THROTTLE_MS) {
+                lastInputSyncTime = now;
+                syncLocalState({ targetX: val });
+            }
+        };
+
+        canvas.addEventListener('touchstart', handleInteractiveInput, { passive: false });
+        canvas.addEventListener('touchmove', handleInteractiveInput, { passive: false });
+        canvas.addEventListener('mousedown', handleInteractiveInput);
+
+        const abortGame = async (redirectMenu) => {
+            gameActive = false;
+            cancelAnimationFrame(animationFrameId);
+            gameContainer.classList.add('hidden');
+
+            if (activeRoomId && hostMode && user) {
+                try {
+                    await withBackoff(() => deleteDoc(getDocRef('rooms', activeRoomId)));
+                    await withBackoff(() => deleteDoc(getDocRef('rooms', activeRoomId + '_p1')));
+                    await withBackoff(() => deleteDoc(getDocRef('rooms', activeRoomId + '_p2')));
+                } catch (err) { 
+                    console.warn("Room document cleanup error: ", err); 
+                }
+            }
+
+            cleanSubscriptions();
+            activeRoomId = null;
+
+            if (redirectMenu) {
+                menuScreen.classList.remove('hidden');
+            } else {
+                lobbyScreen.classList.remove('hidden');
+            }
+        };
+
+        document.getElementById('btn-quit').addEventListener('click', async () => {
+            if (activeRoomId && user) {
+                await withBackoff(() => updateDoc(getDocRef('rooms', activeRoomId), { state: 'waiting' }));
+            }
+            abortGame(true);
+        });
+
+    </script>
+</body>
+</html>
+
+```
     </style>
 </head>
 <body class="text-slate-100 flex flex-col justify-between min-h-screen">
