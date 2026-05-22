@@ -1,0 +1,1180 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VibeSync: Quantum Duel & Co-Op Arena</title>
+    <!-- Tailwind CSS for modern responsive layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #060713;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Neon glow utilities */
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+            text-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+        }
+        .glow-magenta {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+        }
+        .glow-purple {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+            text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col justify-between min-h-screen">
+
+    <!-- ROOT UI WRAPPER -->
+    <div id="app" class="relative w-full h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- MAIN MENU -->
+        <div id="main-menu" class="w-full max-w-md bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-3xl p-6 flex flex-col gap-6 glow-purple transition-all duration-300">
+            <div class="text-center">
+                <h1 class="orbitron text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 animate-pulse">
+                    VIBESYNC
+                </h1>
+                <p class="text-xs text-purple-400 mt-1 uppercase tracking-widest font-bold">Quantum Duel & Co-Op Arena</p>
+            </div>
+
+            <!-- Intro Deck -->
+            <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-sm leading-relaxed text-slate-300">
+                <span class="text-cyan-400 font-bold">Z Fold 7</span> owner? Toggle <span class="text-pink-400 font-bold">Fold Shared-Screen</span> to split the screen, lay it flat on the coffee table, and play face-to-face. Or use <span class="text-purple-400 font-bold">Quantum Link</span> to sync across your two separate devices over your local Wi-Fi.
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <!-- 1. Local Split Screen Option -->
+                <button id="btn-local" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold orbitron tracking-wide text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-lg glow-cyan active:scale-95">
+                    <span>⚡ FOLD SHARED-SCREEN</span>
+                    <span class="text-[10px] bg-black/40 px-2 py-0.5 rounded text-cyan-200">1 Device</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="flex items-center text-xs text-slate-500 my-1">
+                    <div class="flex-grow border-t border-slate-800"></div>
+                    <span class="px-3 uppercase font-bold tracking-wider">or cross-device link</span>
+                    <div class="flex-grow border-t border-slate-800"></div>
+                </div>
+
+                <!-- 2. Wifi Host/Join Options -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-host" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-purple-500/30 font-bold orbitron text-xs tracking-wider transition-all duration-200 active:scale-95">
+                        CREATE ROOM
+                    </button>
+                    <button id="btn-join" class="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-pink-500/30 font-bold orbitron text-xs tracking-wider transition-all duration-200 active:scale-95">
+                        JOIN ROOM
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center text-[10px] text-slate-500 uppercase tracking-widest">
+                Optimized for high-refresh rate OLED matrices
+            </div>
+        </div>
+
+        <!-- LOBBY SCREEN (NETWORKED PLAY) -->
+        <div id="lobby-menu" class="hidden w-full max-w-md bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-3xl p-6 flex flex-col gap-6 glow-purple">
+            <div class="text-center">
+                <h2 class="orbitron text-2xl font-black text-cyan-400 uppercase tracking-widest">Quantum Gateway</h2>
+                <p class="text-xs text-slate-400 mt-1">Connecting devices over Wi-Fi network...</p>
+            </div>
+
+            <div class="bg-black/60 p-5 rounded-2xl border border-slate-800 flex flex-col items-center justify-center gap-2">
+                <span class="text-[11px] text-purple-400 tracking-widest uppercase font-bold">Room Sync Code</span>
+                <span id="room-code-display" class="orbitron text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">----</span>
+                <span id="player-count" class="text-xs text-slate-400 mt-2">Waiting for second device...</span>
+            </div>
+
+            <!-- Lobby Actions -->
+            <div id="join-input-container" class="hidden flex flex-col gap-2">
+                <input id="room-code-input" type="text" maxlength="4" placeholder="ENTER 4-DIGIT CODE" class="w-full py-3 bg-black/50 border border-slate-700 rounded-xl text-center orbitron text-xl text-cyan-300 font-bold tracking-widest focus:outline-none focus:border-cyan-400">
+                <button id="btn-connect-room" class="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 font-bold orbitron text-xs tracking-wider rounded-xl hover:from-pink-400 hover:to-purple-500">
+                    ESTABLISH LINK
+                </button>
+            </div>
+
+            <!-- Game Mode Picker (Available to Host once connected, or just default to selection) -->
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Battle Matrix:</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="mode-duel" class="py-3 rounded-lg bg-pink-500/20 border border-pink-500 text-pink-400 font-bold orbitron text-xs transition-all duration-150">
+                        ⚡ COMP_DUEL
+                    </button>
+                    <button id="mode-coop" class="py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 font-bold orbitron text-xs transition-all duration-150">
+                        🔄 VIBE_SYNC (CO-OP)
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="btn-start-game" class="hidden flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl font-bold orbitron text-xs tracking-widest text-white shadow-lg shadow-emerald-500/20">
+                    SYNC ENGINE (START)
+                </button>
+                <button id="btn-lobby-back" class="flex-1 py-3 bg-slate-800 text-slate-400 border border-slate-700 rounded-xl font-bold orbitron text-xs">
+                    ABORT
+                </button>
+            </div>
+        </div>
+
+        <!-- THE ARENA (CANVAS VIEW) -->
+        <div id="game-container" class="hidden absolute top-0 left-0 w-full h-full bg-black flex flex-col items-center justify-center">
+            
+            <!-- HUD / Scores & Status Overlay -->
+            <div id="hud" class="absolute pointer-events-none top-4 left-4 right-4 flex justify-between items-center z-10 text-white">
+                <!-- Host Side Info -->
+                <div class="flex flex-col">
+                    <span id="hud-p1-name" class="orbitron text-xs tracking-wider text-cyan-400">PLAYER 1</span>
+                    <span id="hud-p1-score" class="orbitron text-2xl font-black">0</span>
+                    <!-- Health Bar -->
+                    <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                        <div id="hud-p1-health" class="w-full h-full bg-cyan-400 transition-all duration-150"></div>
+                    </div>
+                </div>
+
+                <!-- Mid Indicator (Mode / Timer / Sync Info) -->
+                <div class="flex flex-col items-center">
+                    <span id="hud-mode-indicator" class="orbitron text-[10px] bg-slate-900/90 border border-purple-500/50 px-3 py-1 rounded-full text-purple-400 font-bold tracking-widest glow-purple">
+                        DUELING
+                    </span>
+                    <span id="hud-system-status" class="text-[9px] text-slate-500 mt-1 uppercase tracking-widest">SYSTEM: NOMINAL</span>
+                </div>
+
+                <!-- Client Side Info -->
+                <div class="flex flex-col items-end">
+                    <span id="hud-p2-name" class="orbitron text-xs tracking-wider text-pink-400">PLAYER 2</span>
+                    <span id="hud-p2-score" class="orbitron text-2xl font-black">0</span>
+                    <!-- Health Bar -->
+                    <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                        <div id="hud-p2-health" class="w-full h-full bg-pink-400 transition-all duration-150"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In-Game Menu / Options -->
+            <button id="btn-game-quit" class="absolute bottom-4 left-4 z-10 bg-slate-900/80 border border-slate-800 px-3 py-2 rounded-xl text-xs font-bold text-red-400 orbitron">
+                QUIT GAME
+            </button>
+
+            <!-- Gameplay Canvas -->
+            <canvas id="arena-canvas" class="w-full h-full block touch-none"></canvas>
+        </div>
+
+        <!-- POPUP MODALS / ERROR HANDLING -->
+        <div id="toast-modal" class="hidden absolute top-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-red-500 text-red-200 px-6 py-3 rounded-2xl flex items-center gap-3 text-sm glow-magenta transition-all duration-300">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+            <span id="toast-message">Quantum parity error. Retrying...</span>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase Configuration Block
+        let app, auth, db, appId;
+        let user = null;
+
+        // Graceful setup fallbacks for isolated testing and embedded execution environment
+        const defaultFirebaseConfig = {
+            apiKey: "",
+            authDomain: "vibesync-fallback.firebaseapp.com",
+            projectId: "vibesync-fallback",
+            storageBucket: "vibesync-fallback.appspot.com",
+            messagingSenderId: "123456",
+            appId: "1:123456:web:abcd"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
+        appId = typeof __app_id !== 'undefined' ? __app_id : 'vibesync-v1';
+
+        // State Machine variables
+        let localMode = false; // Fold Split-Screen mode
+        let hostMode = false; // Is this device hosting?
+        let activeRoomId = null;
+        let gameActive = false;
+        let selectedGameMode = 'duel'; // 'duel' or 'coop'
+        let p1Score = 0;
+        let p2Score = 0;
+        let p1Health = 100;
+        let p2Health = 100;
+
+        // Controls State
+        let touches = {};
+
+        // Canvas & Physics Loop elements
+        const canvas = document.getElementById('arena-canvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let screenWidth, screenHeight;
+
+        // Custom Sound FX Synthesizer (Zero asset loads!)
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playLaser() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.15);
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playExplode() {
+                this.init();
+                const bufferSize = this.ctx.sampleRate * 0.3;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.3);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start();
+                noise.stop(this.ctx.currentTime + 0.3);
+            }
+            playShieldDeflect() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1200, this.ctx.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+            playSyncCore() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.4);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+        }
+        const sfx = new SoundSynth();
+
+        // Safe Firebase Instantiation Block
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase Initialization Failed. Switching completely to fallback mode.", e);
+        }
+
+        // Initialize Anonymous Auth instantly to prevent database permission blockages
+        const initAuth = async () => {
+            if (!auth) return;
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                console.warn("Anonymous auth failed, attempting fallback authentication strategies.", err);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (u) => {
+            if (u) {
+                user = u;
+                console.log("Device authenticated securely. Cryptographic ID:", user.uid);
+            }
+        });
+
+        // Toast messaging interface
+        const showToast = (message, dur = 3000) => {
+            const toast = document.getElementById('toast-modal');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, dur);
+        };
+
+        // Navigation elements
+        const menuScreen = document.getElementById('main-menu');
+        const lobbyScreen = document.getElementById('lobby-menu');
+        const gameContainer = document.getElementById('game-container');
+        const roomCodeDisplay = document.getElementById('room-code-display');
+        const playerCount = document.getElementById('player-count');
+        const joinInputContainer = document.getElementById('join-input-container');
+        const roomCodeInput = document.getElementById('room-code-input');
+        const btnStartGame = document.getElementById('btn-start-game');
+
+        // Setup Game States / Configurations
+        let physicsEntities = [];
+        let localPlayerShieldX = 0; // percentage based 0 to 1
+        let remotePlayerShieldX = 0;
+        let localPlayerId = '';
+
+        // Co-Op Mode variables
+        let quantumCore = { x: 0.5, y: 0.5, radius: 40, energy: 0, maxEnergy: 100, pulse: 0 };
+        let dynamicHazards = [];
+
+        // Dual Device Sync Structures (Firestore state schemas)
+        const fetchCollectionRef = (roomId) => {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+        };
+
+        // ----------------- MULTIPLAYER CONNECTION LIFE-CYCLE -----------------
+
+        // Action / Input throttling to keep Firestore updates compliant
+        let lastInputSyncTime = 0;
+        const SYNC_RATE_MS = 60; // Smooth 16hz sync rate for optimal packet economy
+
+        const generateRoomCode = () => {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        };
+
+        // UI Handlers for Networking Screen
+        document.getElementById('btn-host').addEventListener('click', async () => {
+            sfx.init();
+            if (!user) {
+                showToast("Securing connection tunnel... please tap again in 1 second.");
+                return;
+            }
+            hostMode = true;
+            localMode = false;
+            localPlayerId = 'p1';
+            activeRoomId = generateRoomCode();
+            
+            menuScreen.classList.add('hidden');
+            lobbyScreen.classList.remove('hidden');
+            roomCodeDisplay.textContent = activeRoomId;
+            playerCount.textContent = "Spinning up local gravity matrices...";
+
+            // Create room document in Firebase
+            try {
+                const roomRef = fetchCollectionRef(activeRoomId);
+                await setDoc(roomRef, {
+                    id: activeRoomId,
+                    state: 'waiting',
+                    hostId: user.uid,
+                    clientId: '',
+                    gameMode: selectedGameMode,
+                    p1Input: 0.5,
+                    p2Input: 0.5,
+                    events: [],
+                    lastUpdated: Date.now()
+                });
+                
+                listenToRoom(activeRoomId);
+            } catch (err) {
+                console.error("Room orchestration failed: ", err);
+                showToast("System breach. Unable to create safe link.");
+                menuScreen.classList.remove('hidden');
+                lobbyScreen.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('btn-join').addEventListener('click', () => {
+            sfx.init();
+            hostMode = false;
+            localMode = false;
+            localPlayerId = 'p2';
+            menuScreen.classList.add('hidden');
+            lobbyScreen.classList.remove('hidden');
+            roomCodeDisplay.textContent = "LINK";
+            joinInputContainer.classList.remove('hidden');
+            playerCount.textContent = "Awaiting matrix link details...";
+        });
+
+        document.getElementById('btn-connect-room').addEventListener('click', async () => {
+            const enteredCode = roomCodeInput.value.trim();
+            if (enteredCode.length !== 4) {
+                showToast("Link signatures require a exactly 4 numerical units.");
+                return;
+            }
+
+            activeRoomId = enteredCode;
+            try {
+                const roomRef = fetchCollectionRef(activeRoomId);
+                const roomSnap = await getDoc(roomRef);
+
+                if (!roomSnap.exists()) {
+                    showToast("No active gateway found for this signature.");
+                    return;
+                }
+
+                const data = roomSnap.data();
+                if (data.clientId !== '' && data.clientId !== user.uid) {
+                    showToast("Quantum link capacity saturated inside this room.");
+                    return;
+                }
+
+                // Connect as Client
+                await updateDoc(roomRef, {
+                    clientId: user.uid,
+                    state: 'ready',
+                    lastUpdated: Date.now()
+                });
+
+                joinInputContainer.classList.add('hidden');
+                roomCodeDisplay.textContent = activeRoomId;
+                listenToRoom(activeRoomId);
+
+            } catch (err) {
+                console.error("Link sync exception: ", err);
+                showToast("Atmospheric drift. Re-check the 4 digit matrix.");
+            }
+        });
+
+        // Room state listening loop
+        let roomUnsubscribe = null;
+        const listenToRoom = (roomId) => {
+            if (roomUnsubscribe) roomUnsubscribe();
+
+            const roomRef = fetchCollectionRef(roomId);
+            roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                const data = snapshot.data();
+
+                // Player occupancy detection
+                if (data.clientId) {
+                    playerCount.textContent = `2 DEVICES ENCRYPTED: ${data.hostId.slice(0, 5)} ⚡ ${data.clientId.slice(0, 5)}`;
+                    if (hostMode) {
+                        btnStartGame.classList.remove('hidden');
+                    }
+                } else {
+                    playerCount.textContent = "Awaiting second matrix connection...";
+                    btnStartGame.classList.add('hidden');
+                }
+
+                // Game Mode Sync
+                if (data.gameMode && data.gameMode !== selectedGameMode) {
+                    selectedGameMode = data.gameMode;
+                    updateLobbyModeUI();
+                }
+
+                // Remote input stream mapping
+                if (hostMode) {
+                    remotePlayerShieldX = data.p2Input;
+                } else {
+                    remotePlayerShieldX = data.p1Input;
+                }
+
+                // Remote Action Event Dispatcher (Deterministic Sync Protocol)
+                if (data.events && data.events.length > 0) {
+                    processSyncedEvents(data.events);
+                }
+
+                // Trigger game state change from host control flow
+                if (data.state === 'playing' && !gameActive) {
+                    initArenaGame();
+                }
+
+                if (data.state === 'waiting' && gameActive) {
+                    exitArenaGame(false);
+                }
+            }, (error) => {
+                console.error("Realtime channel dropped: ", error);
+                showToast("Realtime synchronization disconnected.");
+            });
+        };
+
+        // Lobby Mode Select toggles
+        const modeDuelBtn = document.getElementById('mode-duel');
+        const modeCoopBtn = document.getElementById('mode-coop');
+
+        const updateLobbyModeUI = () => {
+            if (selectedGameMode === 'duel') {
+                modeDuelBtn.className = "py-3 rounded-lg bg-pink-500/20 border border-pink-500 text-pink-400 font-bold orbitron text-xs transition-all duration-150";
+                modeCoopBtn.className = "py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 font-bold orbitron text-xs transition-all duration-150";
+                document.getElementById('hud-mode-indicator').textContent = "DUELING";
+            } else {
+                modeCoopBtn.className = "py-3 rounded-lg bg-cyan-500/20 border border-cyan-500 text-cyan-400 font-bold orbitron text-xs transition-all duration-150";
+                modeDuelBtn.className = "py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 font-bold orbitron text-xs transition-all duration-150";
+                document.getElementById('hud-mode-indicator').textContent = "VIBE-SYNC";
+            }
+        };
+
+        const toggleGameMode = async (mode) => {
+            selectedGameMode = mode;
+            updateLobbyModeUI();
+            if (activeRoomId && hostMode) {
+                const roomRef = fetchCollectionRef(activeRoomId);
+                await updateDoc(roomRef, { gameMode: mode });
+            }
+        };
+
+        modeDuelBtn.addEventListener('click', () => toggleGameMode('duel'));
+        modeCoopBtn.addEventListener('click', () => toggleGameMode('coop'));
+
+        // Action event processing pipeline
+        let handledEventIds = new Set();
+        const processSyncedEvents = (events) => {
+            events.forEach(evt => {
+                if (handledEventIds.has(evt.id)) return;
+                handledEventIds.add(evt.id);
+
+                // Run actions generated from the other player
+                if (evt.sender !== localPlayerId) {
+                    if (evt.type === 'projectile_fired') {
+                        spawnProjectile(evt.x, evt.y, evt.vx, -evt.vy, evt.color, false);
+                        sfx.playLaser();
+                    } else if (evt.type === 'shield_deflect') {
+                        sfx.playShieldDeflect();
+                        triggerScreenFlash();
+                    } else if (evt.type === 'impact') {
+                        sfx.playExplode();
+                        triggerScreenShake();
+                    }
+                }
+            });
+        };
+
+        // Submit actions dynamically to Firestore
+        const dispatchLocalEvent = async (eventPayload) => {
+            if (localMode || !activeRoomId) return;
+            const eventWithMeta = {
+                ...eventPayload,
+                id: crypto.randomUUID(),
+                sender: localPlayerId,
+                timestamp: Date.now()
+            };
+
+            // Inject local action directly so responsive feedback is zero lag
+            handledEventIds.add(eventWithMeta.id);
+
+            try {
+                const roomRef = fetchCollectionRef(activeRoomId);
+                await updateDoc(roomRef, {
+                    events: arrayUnion(eventWithMeta),
+                    lastUpdated: Date.now()
+                });
+            } catch (err) {
+                console.error("Failed to sync structural action: ", err);
+            }
+        };
+
+        // Sync paddle movement input
+        const syncLocalPaddleInput = async (normalizedX) => {
+            if (localMode || !activeRoomId) return;
+            const now = Date.now();
+            if (now - lastInputSyncTime > SYNC_RATE_MS) {
+                lastInputSyncTime = now;
+                try {
+                    const roomRef = fetchCollectionRef(activeRoomId);
+                    if (hostMode) {
+                        await updateDoc(roomRef, { p1Input: normalizedX });
+                    } else {
+                        await updateDoc(roomRef, { p2Input: normalizedX });
+                    }
+                } catch (err) {
+                    console.warn("Input stream buffer overrun: ", err);
+                }
+            }
+        };
+
+        // Leave / Back actions
+        const returnToMenu = async () => {
+            if (roomUnsubscribe) {
+                roomUnsubscribe();
+                roomUnsubscribe = null;
+            }
+            if (activeRoomId && hostMode) {
+                try {
+                    const roomRef = fetchCollectionRef(activeRoomId);
+                    await deleteDoc(roomRef);
+                } catch (err) {
+                    console.warn("Lobby cleanup skipped.");
+                }
+            }
+            activeRoomId = null;
+            hostMode = false;
+            localMode = false;
+            menuScreen.classList.remove('hidden');
+            lobbyScreen.classList.add('hidden');
+            gameContainer.classList.add('hidden');
+        };
+
+        document.getElementById('btn-lobby-back').addEventListener('click', returnToMenu);
+        document.getElementById('btn-game-quit').addEventListener('click', async () => {
+            if (activeRoomId) {
+                const roomRef = fetchCollectionRef(activeRoomId);
+                await updateDoc(roomRef, { state: 'waiting' });
+            }
+            exitArenaGame(true);
+        });
+
+        btnStartGame.addEventListener('click', async () => {
+            if (!activeRoomId) return;
+            const roomRef = fetchCollectionRef(activeRoomId);
+            await updateDoc(roomRef, { state: 'playing', events: [] });
+        });
+
+        // ----------------- LOCAL SHARE MODE TRIGGER (Z FOLD DESIGN) -----------------
+        document.getElementById('btn-local').addEventListener('click', () => {
+            sfx.init();
+            localMode = true;
+            hostMode = false;
+            localPlayerId = 'p1';
+            menuScreen.classList.add('hidden');
+            selectedGameMode = 'duel'; // Multi-panel is prime for high speed dueling
+            initArenaGame();
+        });
+
+
+        // ----------------- PHYSICS ENGINE AND CANVAS RUNTIME -----------------
+
+        let screenShakeAmount = 0;
+        let screenFlashAlpha = 0;
+
+        function resizeCanvas() {
+            screenWidth = window.innerWidth;
+            screenHeight = window.innerHeight;
+            canvas.width = screenWidth * window.devicePixelRatio;
+            canvas.height = screenHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Projectile Constructor
+        class Projectile {
+            constructor(x, y, vx, vy, color, isLocalOrigin) {
+                this.x = x; // float 0 to 1 relative to arena grid coordinates
+                this.y = y; // float 0 to 1
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.radius = 0.012; // Percentage of width
+                this.isLocal = isLocalOrigin;
+                this.trail = [];
+                this.maxTrailLen = 8;
+            }
+
+            update(dt) {
+                // Cache past coordinates for particle drift rendering
+                this.trail.unshift({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrailLen) this.trail.pop();
+
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+            }
+
+            draw(ctx, w, h) {
+                // 1. Draw Drift Trail
+                this.trail.forEach((pos, idx) => {
+                    const alpha = (1 - (idx / this.maxTrailLen)) * 0.4;
+                    ctx.beginPath();
+                    ctx.arc(pos.x * w, pos.y * h, this.radius * w * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                    ctx.fill();
+                });
+
+                // 2. Draw Quantum Particle head
+                ctx.beginPath();
+                ctx.arc(this.x * w, this.y * h, this.radius * w, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+            }
+        }
+
+        // Drop visual particle impact shocks
+        class Shockwave {
+            constructor(x, y, maxRadius, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.maxRadius = maxRadius;
+                this.color = color;
+                this.alpha = 1;
+            }
+            update(dt) {
+                this.radius += 120 * dt;
+                this.alpha = 1 - (this.radius / this.maxRadius);
+            }
+            draw(ctx, w, h) {
+                if (this.alpha <= 0) return;
+                ctx.beginPath();
+                ctx.arc(this.x * w, this.y * h, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = this.color.replace(')', `, ${this.alpha})`).replace('rgb', 'rgba');
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        }
+
+        let particles = [];
+        const triggerScreenShake = () => screenShakeAmount = 15;
+        const triggerScreenFlash = () => screenFlashAlpha = 0.35;
+
+        // Spawn firing event
+        function handleFiringAction(firingLocalPlayer) {
+            let spawnY, directionY, themeColor;
+
+            if (firingLocalPlayer) {
+                spawnY = 0.85;
+                directionY = -0.65; // Upward speed
+                themeColor = 'rgb(6, 182, 212)'; // Cyan
+            } else {
+                spawnY = 0.15;
+                directionY = 0.65; // Downward speed
+                themeColor = 'rgb(236, 72, 153)'; // Pink
+            }
+
+            // Simple random horizontal scatter vector to reward manual deflection adjustments
+            const deltaX = (localPlayerShieldX - 0.5) * 0.5;
+            const projectileX = firingLocalPlayer ? localPlayerShieldX : (localMode ? remotePlayerShieldX : 1 - remotePlayerShieldX);
+
+            spawnProjectile(projectileX, spawnY, deltaX, directionY, themeColor, true);
+
+            // Audio trigger
+            sfx.playLaser();
+
+            // Dispatch event for network synchronization
+            if (!localMode) {
+                dispatchLocalEvent({
+                    type: 'projectile_fired',
+                    x: projectileX,
+                    y: spawnY,
+                    vx: deltaX,
+                    vy: directionY,
+                    color: themeColor
+                });
+            }
+        }
+
+        function spawnProjectile(x, y, vx, vy, color, isLocal) {
+            physicsEntities.push(new Projectile(x, y, vx, vy, color, isLocal));
+        }
+
+        // Initialize Core game values
+        function initArenaGame() {
+            gameActive = true;
+            menuScreen.classList.add('hidden');
+            lobbyScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+
+            p1Score = 0;
+            p2Score = 0;
+            p1Health = 100;
+            p2Health = 100;
+
+            physicsEntities = [];
+            particles = [];
+            touches = {};
+
+            quantumCore = { x: 0.5, y: 0.5, radius: 45, energy: 0, maxEnergy: 100, pulse: 0 };
+            dynamicHazards = [];
+
+            // Reset UI bars
+            document.getElementById('hud-p1-score').textContent = "0";
+            document.getElementById('hud-p2-score').textContent = "0";
+            updateHealthBarUI();
+
+            resizeCanvas();
+
+            // Fire off background game engine ticks
+            lastTime = performance.now();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateHealthBarUI() {
+            document.getElementById('hud-p1-health').style.width = `${p1Health}%`;
+            document.getElementById('hud-p2-health').style.width = `${p2Health}%`;
+        }
+
+        function exitArenaGame(redirectMenu = true) {
+            gameActive = false;
+            cancelAnimationFrame(animationId);
+            gameContainer.classList.add('hidden');
+            if (redirectMenu) {
+                returnToMenu();
+            } else {
+                lobbyScreen.classList.remove('hidden');
+            }
+        }
+
+        // Core Game Engine Tick
+        let lastTime = 0;
+        function gameLoop(time) {
+            if (!gameActive) return;
+            const dt = Math.min((time - lastTime) / 1000, 0.1); // Clamp physics delta to prevent boundary clipping
+            lastTime = time;
+
+            updatePhysics(dt);
+            renderScene();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics(dt) {
+            // Coordinate space dampening and calculations
+            physicsEntities.forEach((ent, index) => {
+                ent.update(dt);
+
+                // Side Wall Collisions
+                if (ent.x <= 0.02 || ent.x >= 0.98) {
+                    ent.vx = -ent.vx;
+                    ent.x = ent.x <= 0.02 ? 0.02 : 0.98;
+                    sfx.playShieldDeflect();
+                }
+
+                // MODE: DUEL PHYSICS
+                if (selectedGameMode === 'duel') {
+                    // Host / Player 1 Boundary Check (Bottom Screen boundary)
+                    if (ent.y >= 0.9) {
+                        const shieldPos = localPlayerShieldX;
+                        const shieldTolerance = 0.12; // Radius of paddle coverage
+
+                        if (Math.abs(ent.x - shieldPos) < shieldTolerance) {
+                            // Perfect Kinetic Bounce
+                            ent.vy = -Math.abs(ent.vy) * 1.05; // Slightly speed up ball to keep intensity high
+                            ent.vx += (ent.x - shieldPos) * 2; // Curve based on paddle strike zone
+                            ent.y = 0.89;
+                            sfx.playShieldDeflect();
+                            particles.push(new Shockwave(ent.x, 0.9, 120, 'rgb(6, 182, 212)'));
+                            dispatchLocalEvent({ type: 'shield_deflect' });
+                        } else {
+                            // Damage Hull direct hits
+                            p1Health -= 15;
+                            particles.push(new Shockwave(ent.x, 0.98, 250, 'rgb(239, 68, 68)'));
+                            sfx.playExplode();
+                            triggerScreenShake();
+                            physicsEntities.splice(index, 1);
+                            dispatchLocalEvent({ type: 'impact' });
+
+                            if (p1Health <= 0) {
+                                p2Score++;
+                                document.getElementById('hud-p2-score').textContent = p2Score;
+                                p1Health = 100;
+                                p2Health = 100;
+                                showToast("PLAYER 2 OVERRIDE COMPLETE!");
+                            }
+                            updateHealthBarUI();
+                        }
+                    }
+
+                    // Client / Player 2 Boundary Check (Top Screen boundary)
+                    else if (ent.y <= 0.1) {
+                        const shieldPos = localMode ? remotePlayerShieldX : (1 - remotePlayerShieldX);
+                        const shieldTolerance = 0.12;
+
+                        if (Math.abs(ent.x - shieldPos) < shieldTolerance) {
+                            ent.vy = Math.abs(ent.vy) * 1.05;
+                            ent.vx += (ent.x - shieldPos) * 2;
+                            ent.y = 0.11;
+                            sfx.playShieldDeflect();
+                            particles.push(new Shockwave(ent.x, 0.1, 120, 'rgb(236, 72, 153)'));
+                            dispatchLocalEvent({ type: 'shield_deflect' });
+                        } else {
+                            p2Health -= 15;
+                            particles.push(new Shockwave(ent.x, 0.02, 250, 'rgb(239, 68, 68)'));
+                            sfx.playExplode();
+                            triggerScreenShake();
+                            physicsEntities.splice(index, 1);
+                            dispatchLocalEvent({ type: 'impact' });
+
+                            if (p2Health <= 0) {
+                                p1Score++;
+                                document.getElementById('hud-p1-score').textContent = p1Score;
+                                p1Health = 100;
+                                p2Health = 100;
+                                showToast("PLAYER 1 OVERRIDE COMPLETE!");
+                            }
+                            updateHealthBarUI();
+                        }
+                    }
+                }
+
+                // MODE: VIBESYNC (CO-OP CORE HARMONY)
+                else if (selectedGameMode === 'coop') {
+                    // Check intersection with central Quantum Core
+                    const dx = ent.x - quantumCore.x;
+                    const dy = ent.y - quantumCore.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < (quantumCore.radius / screenWidth) + ent.radius) {
+                        // Absorb energy node into core
+                        quantumCore.energy += 10;
+                        sfx.playSyncCore();
+                        particles.push(new Shockwave(quantumCore.x, quantumCore.y, 180, 'rgb(168, 85, 247)'));
+                        physicsEntities.splice(index, 1);
+
+                        if (quantumCore.energy >= quantumCore.maxEnergy) {
+                            p1Score += 500;
+                            p2Score += 500;
+                            document.getElementById('hud-p1-score').textContent = p1Score;
+                            document.getElementById('hud-p2-score').textContent = p2Score;
+                            quantumCore.energy = 0;
+                            showToast("QUANTUM COHERENCE ACHIEVED! LEVEL OVERDRIVE!");
+                        }
+                    }
+
+                    // Out of bounds bounds in Co-op mode bounce off edges
+                    if (ent.y < 0.02 || ent.y > 0.98) {
+                        ent.vy = -ent.vy;
+                        sfx.playShieldDeflect();
+                    }
+                }
+            });
+
+            // Pulse effects
+            quantumCore.pulse += dt * 5;
+
+            // Resolve aesthetic feedback loops
+            particles.forEach((p, idx) => {
+                p.update(dt);
+                if (p.alpha <= 0) particles.splice(idx, 1);
+            });
+
+            if (screenShakeAmount > 0.1) screenShakeAmount *= 0.9;
+            if (screenFlashAlpha > 0.01) screenFlashAlpha *= 0.85;
+        }
+
+        function renderScene() {
+            // 1. Clear Arena and establish base transforms
+            ctx.fillStyle = '#060713';
+            ctx.fillRect(0, 0, screenWidth, screenHeight);
+
+            // Frame buffers applied for physical haptics/screen shaking
+            ctx.save();
+            if (screenShakeAmount > 0.1) {
+                const shakeX = (Math.random() - 0.5) * screenShakeAmount;
+                const shakeY = (Math.random() - 0.5) * screenShakeAmount;
+                ctx.translate(shakeX, shakeY);
+            }
+
+            // Draw Cyber Grid Lines
+            ctx.strokeStyle = '#101435';
+            ctx.lineWidth = 1;
+            const gridSpacing = 40;
+            for (let x = 0; x < screenWidth; x += gridSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, screenHeight);
+                ctx.stroke();
+            }
+            for (let y = 0; y < screenHeight; y += gridSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(screenWidth, y);
+                ctx.stroke();
+            }
+
+            // MODE AESTHETICS AND COMPONENT OVERLAYS
+            if (selectedGameMode === 'duel') {
+                // Divider Line
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.2)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([15, 10]);
+                ctx.beginPath();
+                ctx.moveTo(0, screenHeight / 2);
+                ctx.lineTo(screenWidth, screenHeight / 2);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset
+            } else if (selectedGameMode === 'coop') {
+                // Core Sync Aura
+                const pulseRadius = quantumCore.radius + Math.sin(quantumCore.pulse) * 8;
+                const coreGrad = ctx.createRadialGradient(
+                    quantumCore.x * screenWidth, quantumCore.y * screenHeight, 5,
+                    quantumCore.x * screenWidth, quantumCore.y * screenHeight, pulseRadius
+                );
+                coreGrad.addColorStop(0, '#ffffff');
+                coreGrad.addColorStop(0.3, '#a855f7');
+                coreGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+
+                ctx.beginPath();
+                ctx.arc(quantumCore.x * screenWidth, quantumCore.y * screenHeight, pulseRadius, 0, Math.PI * 2);
+                ctx.fillStyle = coreGrad;
+                ctx.fill();
+
+                // Core charge ring UI
+                ctx.beginPath();
+                ctx.arc(quantumCore.x * screenWidth, quantumCore.y * screenHeight, quantumCore.radius + 15, -Math.PI/2, (-Math.PI/2) + (Math.PI * 2 * (quantumCore.energy / quantumCore.maxEnergy)));
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            }
+
+            // Draw Kinetic Paddles / Shields
+            const shieldWidth = 0.18 * screenWidth;
+            const shieldHeight = 10;
+
+            // Player 1 Local Shield (Cyan - Bottom of Matrix)
+            const p1X = (localPlayerShieldX * screenWidth) - (shieldWidth / 2);
+            const p1Y = (0.88 * screenHeight) - (shieldHeight / 2);
+            drawRoundedRect(ctx, p1X, p1Y, shieldWidth, shieldHeight, 6, '#06b6d4', true);
+
+            // Player 2 Remote Shield (Pink - Top of Matrix)
+            const resolvedP2X = localMode ? remotePlayerShieldX : (1 - remotePlayerShieldX);
+            const p2X = (resolvedP2X * screenWidth) - (shieldWidth / 2);
+            const p2Y = (0.12 * screenHeight) - (shieldHeight / 2);
+            drawRoundedRect(ctx, p2X, p2Y, shieldWidth, shieldHeight, 6, '#ec4899', true);
+
+            // Draw all active entities inside matrix frame
+            physicsEntities.forEach(ent => ent.draw(ctx, screenWidth, screenHeight));
+            particles.forEach(p => p.draw(ctx, screenWidth, screenHeight));
+
+            ctx.restore();
+
+            // Flash screen indicator filter
+            if (screenFlashAlpha > 0.01) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${screenFlashAlpha})`;
+                ctx.fillRect(0, 0, screenWidth, screenHeight);
+            }
+        }
+
+        function drawRoundedRect(ctx, x, y, width, height, radius, color, isGlow) {
+            ctx.save();
+            if (isGlow) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
+            }
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+
+        // ----------------- TACTILE INPUT INTERCEPTORS -----------------
+
+        // Capture touch coordinates mapped beautifully across Z Fold aspect ratios
+        function processTouchEvents(e) {
+            if (!gameActive) return;
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const currentTouches = e.touches;
+
+            for (let i = 0; i < currentTouches.length; i++) {
+                const touch = currentTouches[i];
+                const touchX = (touch.clientX - rect.left) / screenWidth;
+                const touchY = (touch.clientY - rect.top) / screenHeight;
+
+                // localMode split-screen divides inputs into half screens
+                if (localMode) {
+                    if (touchY > 0.5) {
+                        // Player 1 controls bottom half
+                        localPlayerShieldX = Math.max(0.1, Math.min(0.9, touchX));
+                        // Fire logic if tapping far edge or quick tap
+                        if (touch.clientY > screenHeight * 0.9) {
+                            handleFiringAction(true);
+                        }
+                    } else {
+                        // Player 2 controls top half
+                        remotePlayerShieldX = Math.max(0.1, Math.min(0.9, touchX));
+                        if (touch.clientY < screenHeight * 0.1) {
+                            handleFiringAction(false);
+                        }
+                    }
+                } else {
+                    // Wifi Link: Local player drives bottom shield, fires by tapping lower zone
+                    localPlayerShieldX = Math.max(0.1, Math.min(0.9, touchX));
+                    syncLocalPaddleInput(localPlayerShieldX);
+
+                    // Swipe/Tap below 30% screen to deploy pulses
+                    if (touchY > 0.75 && !touches[touch.identifier]) {
+                        handleFiringAction(true);
+                    }
+                }
+                touches[touch.identifier] = { x: touchX, y: touchY };
+            }
+        }
+
+        canvas.addEventListener('touchstart', processTouchEvents, { passive: false });
+        canvas.addEventListener('touchmove', processTouchEvents, { passive: false });
+        canvas.addEventListener('touchend', (e) => {
+            touches = {};
+        }, { passive: true });
+
+        // Fallback Mouse Controller for desktop validation
+        canvas.addEventListener('mousemove', (e) => {
+            if (!gameActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / screenWidth;
+            localPlayerShieldX = Math.max(0.1, Math.min(0.9, mouseX));
+            syncLocalPaddleInput(localPlayerShieldX);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameActive) return;
+            handleFiringAction(true);
+        });
+
+    </script>
+</body>
+</html>
+
+```
+
